@@ -28,13 +28,12 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: requirements.txt
 
-      - name: Install dependencies
+      - name: Install CPU PyTorch and project dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
-          python -m pip install ruff
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision
+          python -m pip install "streamlit>=1.36,<2.0" "Pillow>=10.0" "pytest>=8.0" ruff
 
       - name: Check Python syntax
         run: python -m compileall -q app.py src tests
