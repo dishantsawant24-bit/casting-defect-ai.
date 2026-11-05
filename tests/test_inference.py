@@ -1,3 +1,5 @@
+from io import BytesIO
+
 import pytest
 from PIL import Image
 
@@ -24,7 +26,11 @@ def test_unknown_class_is_not_pass():
 
 
 def test_uploaded_image_is_converted_to_rgb():
-    image = Image.new("RGBA", (8, 8), (255, 0, 0, 128))
-    converted = open_image_file(image)
+    source = Image.new("RGBA", (8, 8), (255, 0, 0, 128))
+    buffer = BytesIO()
+    source.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    converted = open_image_file(buffer)
     assert converted.mode == "RGB"
     assert converted.size == (8, 8)
