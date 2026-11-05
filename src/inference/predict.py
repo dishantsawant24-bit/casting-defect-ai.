@@ -82,10 +82,10 @@ def load_model(checkpoint_path: str | Path = MODEL_PATH) -> tuple[torch.nn.Modul
 
 def predict(image_path: str | Path) -> dict[str, float | str]:
     """Classify an image and return result, defect class, and confidence."""
-    model, device = load_model()
     path = Path(image_path)
     if not path.is_file():
         raise FileNotFoundError("Inspection image was not found.")
+    model, device = load_model()
     try:
         with Image.open(path) as source:
             image = source.convert("RGB")
