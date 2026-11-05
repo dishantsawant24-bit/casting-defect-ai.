@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local data and generated artifacts
+data/
+datasets/
+outputs/
+logs/
+*.log
+*.db
+*.sqlite3
+
+# Model weights (keep large/private checkpoints out of Git by default)
+models/*.pth
+models/*.pt
+models/*.ckpt
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
