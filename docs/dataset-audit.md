@@ -40,11 +40,12 @@ python -m src.data.audit --dataset-root "D:\archive (2)\output\defect_dataset" -
 
 The command writes:
 
-- `dataset_audit.json`: image counts, decodability, dimensions, formats, class-folder issues, and exact duplicate checks.
+- `dataset_audit.json`: image counts, decodability, dimensions, formats, class-folder issues, exact duplicates, and perceptual candidate summary.
 - `class_counts.csv`: found, valid, and corrupt image counts per class.
-- `splits/train.csv`, `splits/val.csv`, and `splits/test.csv`: relative image paths, labels, and SHA-256 hashes.
+- `perceptual_candidates.csv`: image pairs flagged by perceptual hash (maximum Hamming distance 5) and SSIM (at least 0.95 at 256 × 256 review resolution).
+- `splits/train.csv`, `splits/val.csv`, and `splits/test.csv`: relative image paths, labels, and SHA-256 hashes, created only when the similarity candidates have been manually reviewed and acknowledged.
 
-The default split is stratified per class at 70% train, 15% validation, and 15% test with seed 42. You can change the ratios with `--train-ratio`, `--val-ratio`, and `--test-ratio`; they must sum to 1.0. Exact duplicate images block split generation so duplicate copies cannot silently leak between splits. Corrupt images are reported and excluded from the manifests.
+The default split is stratified per class at 70% train, 15% validation, and 15% test with seed 42. You can change the ratios with `--train-ratio`, `--val-ratio`, and `--test-ratio`; they must sum to 1.0. Exact duplicates block split generation. Perceptual candidates also block split generation by default; inspect `perceptual_candidates.csv`, resolve or document the pairs, then explicitly pass `--acknowledge-perceptual-candidates` to permit a split. Corrupt images are reported and excluded from manifests. The similarity thresholds are screening heuristics, not proof that two images are duplicates.
 
 ## Audit of the maintainer-supplied archive (2026-11-06)
 
@@ -53,3 +54,8 @@ The ZIP supplied for this review contained 1,200 JPEG images across 12 classes, 
 A seed-42, 70/15/15 split was generated locally: 840 train, 180 validation, and 180 test images. This is a **new split**, not evidence that it matches the membership of any earlier model-training run. Do not use it to claim independent accuracy for an existing checkpoint unless its training-image membership is known and non-overlapping.
 
 Exact duplicate detection uses SHA-256 and does not detect visually similar or near-duplicate images. Automated file integrity checks do not verify whether every human-assigned class label is correct. Review labels and provenance before publishing model-performance claims.
+
+
+The subsequent perceptual screen resized grayscale images to 256 × 256, used a 64-bit DCT perceptual hash (maximum Hamming distance 5), and compared shortlisted pairs with SSIM (minimum 0.95). It flagged **122 candidate pairs involving 105 images; 105 pairs crossed class folders**. This does not prove the pairs are duplicates or labels are wrong, because the dataset shows one recurring part geometry and camera framing. However, several examples appear highly similar with small surface differences, so random splitting could put related images in both training and test sets. The audit tool now records these candidates and refuses to generate splits until they are reviewed and explicitly acknowledged.
+
+A provisional 70/15/15 manifest generated before this similarity screen should **not** be used as the final evaluation split. No final split is currently approved.
