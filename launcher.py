@@ -1,6 +1,12 @@
 """Windows launcher for the local Streamlit inspection application."""
 from __future__ import annotations
-import os, socket, sys, threading, time, webbrowser
+
+import os
+import socket
+import sys
+import threading
+import time
+import webbrowser
 from pathlib import Path
 
 
@@ -24,17 +30,23 @@ def main() -> None:
         sock.bind(("127.0.0.1", 0))
         port = int(sock.getsockname()[1])
     options = {
-        "server.port": port, "server.address": "127.0.0.1",
-        "server.headless": True, "browser.gatherUsageStats": False,
+        "server.port": port,
+        "server.address": "127.0.0.1",
+        "server.headless": True,
+        "browser.gatherUsageStats": False,
         "server.fileWatcherType": "none",
     }
+
     from streamlit import config
     from streamlit.web import bootstrap
+
     for key, value in options.items():
         config.set_option(key, value)
+
     def open_browser() -> None:
         time.sleep(2.0)
         webbrowser.open(f"http://127.0.0.1:{port}")
+
     threading.Thread(target=open_browser, daemon=True).start()
     bootstrap.run(str(app_file), False, [], options)
 
