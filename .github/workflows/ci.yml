@@ -36,10 +36,10 @@ jobs:
           python -m pip install -r requirements-dev.txt
 
       - name: Check Python syntax
-        run: python -m compileall -q app launcher.py src tests
+        run: python -m compileall -q app launcher.py src scripts tests
 
       - name: Lint
-        run: ruff check app launcher.py src tests
+        run: ruff check app launcher.py src scripts tests
 
       - name: Run tests
         run: pytest -q
