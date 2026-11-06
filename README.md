@@ -81,7 +81,7 @@ Keep the full dataset, local reports, split manifests, and model weights outside
 python -m src.data.audit --dataset-root /path/to/defect_dataset --output-dir outputs/dataset_audit --seed 42
 ```
 
-The tool checks expected class folders, decodes supported image files, reports corrupt images and exact SHA-256 duplicates, and writes JSON/CSV reports plus split manifests. Exact duplicates block split generation to reduce train/test leakage. See [docs/dataset-audit.md](docs/dataset-audit.md) for Windows instructions, output details, and known limitations. The generated split is new and must not be assumed to match any earlier checkpoint's training split.
+The tool checks expected class folders, decodes supported image files, reports corrupt images and exact SHA-256 duplicates, and flags perceptual near-duplicate candidates using pHash plus SSIM. It blocks split generation while such candidates await review; only use `--acknowledge-perceptual-candidates` after inspecting the candidate CSV. See [docs/dataset-audit.md](docs/dataset-audit.md) for Windows instructions, output details, and limitations. Any generated split is new and must not be assumed to match an earlier checkpoint's training split.
 
 ## Development and tests
 
