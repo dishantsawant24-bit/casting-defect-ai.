@@ -50,3 +50,29 @@ def test_exact_duplicates_block_split_creation() -> None:
     ]
     with pytest.raises(ValueError, match="Exact duplicate"):
         create_stratified_splits(records)
+
+
+def test_perceptual_candidates_flag_similar_images_across_classes(tmp_path: Path) -> None:
+    from PIL import ImageEnhance
+
+    from src.data.audit import _find_perceptual_candidates
+
+    first = Image.new("RGB", (128, 128), (110, 110, 110))
+    for x in range(16, 112, 16):
+        for y in range(16, 112, 16):
+            first.putpixel((x, y), (220, 220, 220))
+    second = ImageEnhance.Brightness(first).enhance(1.03)
+    (tmp_path / "ok").mkdir(parents=True)
+    (tmp_path / "crack").mkdir(parents=True)
+    first.save(tmp_path / "ok" / "one.jpg", quality=95)
+    second.save(tmp_path / "crack" / "two.jpg", quality=95)
+    records = [
+        {"image_path": "ok/one.jpg", "label": "ok"},
+        {"image_path": "crack/two.jpg", "label": "crack"},
+    ]
+
+    candidates = _find_perceptual_candidates(tmp_path, records)
+
+    assert len(candidates) == 1
+    assert candidates[0]["cross_class"] is True
+    assert candidates[0]["ssim"] >= 0.95
