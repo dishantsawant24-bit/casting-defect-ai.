@@ -1,5 +1,7 @@
 # Casting Defect AI
 
+**License:** The project source code and its accompanying documentation are released under the [MIT License](LICENSE). The MIT licence does not grant rights to redistribute third-party datasets, sample images, or model weights; those assets remain excluded until their respective rights are confirmed.
+
 A local-first Streamlit application for image-based casting surface inspection using a trained 12-class ResNet18 classifier.
 
 ## What the application does
