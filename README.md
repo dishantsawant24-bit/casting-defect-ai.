@@ -67,9 +67,9 @@ The PyInstaller bundle includes the checkpoint. Treat the generated executable a
 
 ## Local data and privacy
 
-Images are written to a temporary directory only while an inspection runs and are removed when processing exits. The SQLite database stores timestamp, sanitized image filename, decision, predicted class, and confidence—not image bytes. Use **CLEAR LOCAL HISTORY** to delete stored records.
+Images are written to a temporary directory only while an inspection runs and are removed when processing exits. The SQLite database stores timestamp, a generic source label, decision, predicted class, and confidence—not image bytes or the original uploaded filename. Use **CLEAR LOCAL HISTORY** to delete stored records.
 
-The application performs inference locally and does not call an external prediction API. The launcher binds to `127.0.0.1` and disables Streamlit usage statistics. See [docs/privacy.md](docs/privacy.md).
+The application performs inference locally and does not call an external prediction API. The launcher binds to `127.0.0.1` and disables Streamlit usage statistics. See [docs/privacy.md](docs/privacy.md). The checkpoint smoke-check notes are in [docs/model-checkpoint-review.md](docs/model-checkpoint-review.md).
 
 ## Development and tests
 
