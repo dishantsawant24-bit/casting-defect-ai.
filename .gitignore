@@ -1,38 +1,66 @@
-# Python
+# Python runtime and test artifacts
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.coverage
+htmlcov/
 
 # Virtual environments
 .venv/
 venv/
 env/
 
-# Secrets and local configuration
+# Secrets and private local configuration
 .env
 .env.*
 !.env.example
+.streamlit/secrets.toml
+secrets.toml
 *.pem
 *.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+.aws/
+.ssh/
+*_credentials.json
+service-account*.json
+credentials*.json
+config.local.*
+*.local.yaml
+*.local.yml
 
-# Local data and generated artifacts
+# Local datasets, inspection outputs, and logs
 data/
 datasets/
 outputs/
 logs/
 *.log
 *.db
+*.sqlite
 *.sqlite3
 
-# Model weights (keep large/private checkpoints out of Git by default)
+# Model weights and generated model artifacts
 models/*.pth
 models/*.pt
 models/*.ckpt
+models/**/*.pth
+models/**/*.pt
+models/**/*.ckpt
 
-# Editor / OS
+# Build outputs and packaged executables
+build/
+dist/
+*.spec.build/
+*.exe
+*.msi
+
+# Editor and operating system files
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+.ipynb_checkpoints/
