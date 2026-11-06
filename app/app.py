@@ -56,7 +56,7 @@ result = st.session_state.get("inspection_result")
 image_name = None
 image_bytes = None
 if input_file is not None:
-    image_name = "camera_capture.jpg" if camera_file is not None else Path(uploaded_file.name).name
+    image_name = "camera_capture.jpg" if camera_file is not None else "uploaded_image.jpg"
     image_bytes = input_file.getvalue()
     image_hash = hashlib.sha256(image_bytes).hexdigest()
     if len(image_bytes) > MAX_UPLOAD_BYTES:
@@ -151,5 +151,5 @@ with chart_col:
 
 st.markdown('<div class="footer">RESNET18 · 12 CLASSES · TEMPORARY IMAGE PROCESSING · LOCAL METADATA HISTORY</div>',unsafe_allow_html=True)
 with st.expander("Privacy and model notes"):
-    st.write("Images are written to a temporary local file only during inspection and removed afterwards. Local SQLite stores timestamp, sanitized filename, decision, predicted class, and confidence; it does not store image bytes. The application does not call an external prediction API.")
+    st.write("Images are written to a temporary local file only during inspection and removed afterwards. Local SQLite stores timestamp, a generic source label (not the user-supplied filename), decision, predicted class, and confidence; it does not store image bytes. The application does not call an external prediction API.")
     st.write("The face gate is a basic frontal-face exclusion heuristic, not a casting-object detector. Confidence below 70% becomes REVIEW. This prototype is not certified for final production acceptance.")
