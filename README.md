@@ -73,6 +73,12 @@ Images are written to a temporary directory only while an inspection runs and ar
 
 The application performs inference locally and does not call an external prediction API. The launcher binds to `127.0.0.1` and disables Streamlit usage statistics. See [docs/privacy.md](docs/privacy.md). The checkpoint smoke-check notes are in [docs/model-checkpoint-review.md](docs/model-checkpoint-review.md).
 
+## Dataset audit and evaluation
+
+The local dataset review found 1,200 readable images across 12 balanced classes. A perceptual-similarity scan produced 111 candidate image pairs; these require human review and are not automatically treated as duplicates or label errors. The project now includes local-only audit, conservative split generation, fresh ResNet18 training, and held-out evaluation scripts. See [the dataset audit](docs/dataset-audit.md) and [local workflow](docs/dataset-workflow.md).
+
+The dataset, split manifests, and trained weights remain excluded from the public repository. Do not publish dataset images or model weights unless redistribution rights are confirmed.
+
 ## Development and tests
 
 ```bash
