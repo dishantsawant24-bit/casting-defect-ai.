@@ -35,7 +35,7 @@ python -m src.data.audit --dataset-root /path/to/defect_dataset --output-dir out
 On Windows PowerShell, replace the dataset path with the extracted folder path, for example:
 
 ```powershell
-python -m src.data.audit --dataset-root \"D:\\\\archive (2)\\\\output\\\\defect_dataset\" --output-dir outputs/dataset_audit --seed 42
+python -m src.data.audit --dataset-root "D:\archive (2)\output\defect_dataset" --output-dir outputs/dataset_audit --seed 42
 ```
 
 The command writes:
