@@ -73,6 +73,16 @@ Images are written to a temporary directory only while an inspection runs and ar
 
 The application performs inference locally and does not call an external prediction API. The launcher binds to `127.0.0.1` and disables Streamlit usage statistics. See [docs/privacy.md](docs/privacy.md). The checkpoint smoke-check notes are in [docs/model-checkpoint-review.md](docs/model-checkpoint-review.md).
 
+## Dataset audit and split generation
+
+Keep the full dataset, local reports, split manifests, and model weights outside this public repository unless their redistribution rights are confirmed. To inspect a class-folder dataset and generate deterministic 70/15/15 train/validation/test CSV manifests, run:
+
+```bash
+python -m src.data.audit --dataset-root /path/to/defect_dataset --output-dir outputs/dataset_audit --seed 42
+```
+
+The tool checks expected class folders, decodes supported image files, reports corrupt images and exact SHA-256 duplicates, and flags perceptual near-duplicate candidates using pHash plus SSIM. It blocks split generation while such candidates await review; only use `--acknowledge-perceptual-candidates` after inspecting the candidate CSV. See [docs/dataset-audit.md](docs/dataset-audit.md) for Windows instructions, output details, and limitations. Any generated split is new and must not be assumed to match an earlier checkpoint's training split.
+
 ## Development and tests
 
 ```bash

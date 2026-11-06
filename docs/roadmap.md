@@ -14,6 +14,16 @@ Last reviewed: 2026-11-06. A checked item means the work is present in the publi
 - [x] Add contribution, security, privacy, model-card, and maintenance documentation.
 - [x] Add the MIT licence for project source code and document that it does not grant rights to model weights or datasets.
 
+## Dataset audit (2026-11-06)
+
+- [x] Receive the maintainer-supplied 1,200-image archive for local review; keep the archive and images out of the public repository.
+- [x] Verify 12 class folders with 100 images per class, 1,200 decodable 512 × 512 RGB JPEGs, and no exact SHA-256 duplicates.
+- [x] Add a reusable local dataset audit with exact-duplicate and perceptual-similarity screening, CSV reports, and deterministic split controls.
+- [x] Screen the archive for pHash/SSIM near-duplicate candidates; the tool now blocks splitting pending manual review.
+- [ ] Review 122 perceptual-similarity candidate pairs (105 cross-class pairs) and decide whether they share underlying source images; do not use the provisional split for final evaluation.
+- [ ] Verify original checkpoint training-image membership before evaluating that checkpoint on a new test split.
+- [ ] Review image labels and dataset provenance; automated file checks do not establish label correctness or redistribution rights.
+
 ## Highest-priority work
 
 1. [ ] Confirm the provenance and redistribution rights for the model checkpoint, training dataset, and any sample images. Keep unapproved assets out of the public repository.
