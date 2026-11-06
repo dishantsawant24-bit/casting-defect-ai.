@@ -9,6 +9,9 @@ import math
 import random
 import sys
 from collections import Counter, defaultdict
+
+import cv2
+import numpy as np
 from pathlib import Path
 from typing import Iterable, Sequence
 
@@ -27,6 +30,78 @@ def _file_sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _perceptual_hash(gray: np.ndarray) -> int:
+    small = cv2.resize(gray, (32, 32), interpolation=cv2.INTER_AREA).astype(np.float32)
+    coefficients = cv2.dct(small)[:8, :8].flatten()
+    median = float(np.median(coefficients[1:]))
+    value = 0
+    for coefficient in coefficients[1:]:
+        value = (value << 1) | int(coefficient > median)
+    return value
+
+
+def _ssim_score(first: np.ndarray, second: np.ndarray) -> float:
+    first = first.astype(np.float32)
+    second = second.astype(np.float32)
+    c1 = (0.01 * 255) ** 2
+    c2 = (0.03 * 255) ** 2
+    mean_first = cv2.GaussianBlur(first, (11, 11), 1.5)
+    mean_second = cv2.GaussianBlur(second, (11, 11), 1.5)
+    var_first = cv2.GaussianBlur(first * first, (11, 11), 1.5) - mean_first * mean_first
+    var_second = cv2.GaussianBlur(second * second, (11, 11), 1.5) - mean_second * mean_second
+    covariance = cv2.GaussianBlur(first * second, (11, 11), 1.5) - mean_first * mean_second
+    score = ((2 * mean_first * mean_second + c1) * (2 * covariance + c2)) / (
+        (mean_first * mean_first + mean_second * mean_second + c1)
+        * (var_first + var_second + c2)
+    )
+    return float(np.mean(score))
+
+
+def _find_perceptual_candidates(
+    root: Path, records: Sequence[dict], max_hash_distance: int = 5, min_ssim: float = 0.95
+) -> list[dict]:
+    hashes: list[int] = []
+    paths: list[Path] = []
+    gray_cache: dict[Path, np.ndarray] = {}
+    for record in records:
+        path = root / record["image_path"]
+        with Image.open(path) as image:
+            gray = np.asarray(image.convert("L"), dtype=np.uint8)
+        gray = cv2.resize(gray, (256, 256), interpolation=cv2.INTER_AREA)
+        gray_cache[path] = gray
+        hashes.append(_perceptual_hash(gray))
+        paths.append(path)
+
+    candidates = []
+    for first_index, first_hash in enumerate(hashes):
+        for second_index in range(first_index + 1, len(hashes)):
+            distance = (first_hash ^ hashes[second_index]).bit_count()
+            if distance > max_hash_distance:
+                continue
+            first_path = paths[first_index]
+            second_path = paths[second_index]
+            score = _ssim_score(gray_cache[first_path], gray_cache[second_path])
+            if score < min_ssim:
+                continue
+            first_record = records[first_index]
+            second_record = records[second_index]
+            candidates.append(
+                {
+                    "image_path_1": first_record["image_path"],
+                    "label_1": first_record["label"],
+                    "image_path_2": second_record["image_path"],
+                    "label_2": second_record["label"],
+                    "phash_distance": distance,
+                    "ssim": round(score, 6),
+                    "cross_class": first_record["label"] != second_record["label"],
+                }
+            )
+    candidates.sort(
+        key=lambda item: (-item["ssim"], item["phash_distance"], item["image_path_1"])
+    )
+    return candidates
 
 
 def scan_dataset(
@@ -91,6 +166,12 @@ def scan_dataset(
 
     duplicates = [group for group in hashes.values() if len(group) > 1]
     duplicate_conflicts = [group for group in duplicates if len({item["label"] for item in group}) > 1]
+    perceptual_candidates = _find_perceptual_candidates(root, valid_records)
+    candidate_images = {
+        item[key]
+        for item in perceptual_candidates
+        for key in ("image_path_1", "image_path_2")
+    }
     image_count = sum(item["found"] for item in class_counts.values())
     non_image_count = sum(
         1 for path in root.rglob("*")
@@ -114,6 +195,11 @@ def scan_dataset(
         "duplicate_label_conflicts": len(duplicate_conflicts),
         "duplicates": duplicates,
         "corrupt_file_details": corrupt,
+        "perceptual_candidate_pairs": len(perceptual_candidates),
+        "perceptual_candidate_images": len(candidate_images),
+        "perceptual_cross_class_pairs": sum(item["cross_class"] for item in perceptual_candidates),
+        "perceptual_thresholds": {"phash_max_distance": 5, "ssim_min": 0.95},
+        "perceptual_candidates": perceptual_candidates,
     }
     return report, valid_records
 
@@ -201,6 +287,17 @@ def write_outputs(
         for name, counts in report["class_counts"].items():
             writer.writerow([name, counts["found"], counts["valid"], counts["corrupt"]])
 
+    candidate_fields = [
+        "image_path_1", "label_1", "image_path_2", "label_2",
+        "phash_distance", "ssim", "cross_class",
+    ]
+    with (destination / "perceptual_candidates.csv").open(
+        "w", newline="", encoding="utf-8"
+    ) as handle:
+        writer = csv.DictWriter(handle, fieldnames=candidate_fields)
+        writer.writeheader()
+        writer.writerows(report["perceptual_candidates"])
+
     if splits:
         split_dir = destination / "splits"
         split_dir.mkdir(parents=True, exist_ok=True)
@@ -221,13 +318,24 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--train-ratio", type=float, default=0.70)
     parser.add_argument("--val-ratio", type=float, default=0.15)
     parser.add_argument("--test-ratio", type=float, default=0.15)
+    parser.add_argument(
+        "--acknowledge-perceptual-candidates",
+        action="store_true",
+        help="Allow splits after manually reviewing perceptual similarity candidates.",
+    )
     args = parser.parse_args(argv)
 
     report, records = scan_dataset(args.dataset_root)
     has_structure_issues = bool(report["missing_classes"] or report["unexpected_class_directories"])
     has_duplicates = report["exact_duplicate_groups"] > 0
+    perceptual_review_needed = report["perceptual_candidate_pairs"] > 0
     splits = None
-    if not has_structure_issues and not has_duplicates and records:
+    if (
+        not has_structure_issues
+        and not has_duplicates
+        and records
+        and (not perceptual_review_needed or args.acknowledge_perceptual_candidates)
+    ):
         splits = create_stratified_splits(
             records, args.train_ratio, args.val_ratio, args.test_ratio, args.seed
         )
@@ -239,9 +347,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     print(f"Valid images: {report['valid_images']}")
     print(f"Corrupt images: {report['corrupt_images']}")
     print(f"Exact duplicate groups: {report['exact_duplicate_groups']}")
+    print(f"Perceptual candidate pairs: {report['perceptual_candidate_pairs']}")
+    print(f"Perceptual candidates: {Path(args.output_dir) / 'perceptual_candidates.csv'}")
     print(f"Audit report: {Path(args.output_dir) / 'dataset_audit.json'}")
     if splits is None:
-        print("Split files not created; resolve missing/unexpected class folders or duplicates.", file=sys.stderr)
+        reason = (
+            "perceptual candidates need manual review"
+            if perceptual_review_needed
+            else "dataset structure or duplicate issues"
+        )
+        print(f"Split files not created; resolve {reason} first.", file=sys.stderr)
         return 2
     print("Split counts:", {name: len(values) for name, values in splits.items()})
     return 0
