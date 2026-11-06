@@ -33,7 +33,7 @@ def scan_dataset(
     dataset_root: Path | str,
     expected_classes: Sequence[str] = DEFAULT_CLASSES,
 ) -> tuple[dict, list[dict]]:
-    \"\"\"Return a JSON-safe audit report and records for images that can be decoded.\"\"\"
+    """Return a JSON-safe audit report and records for images that can be decoded."""
     root = Path(dataset_root).expanduser().resolve()
     if not root.is_dir():
         raise FileNotFoundError(f"Dataset folder does not exist: {root}")
@@ -139,7 +139,7 @@ def create_stratified_splits(
     test_ratio: float = 0.15,
     seed: int = 42,
 ) -> dict[str, list[dict]]:
-    \"\"\"Create deterministic per-class splits and reject exact duplicates to prevent leakage.\"\"\"
+    """Create deterministic per-class splits and reject exact duplicates to prevent leakage."""
     ratios = (train_ratio, val_ratio, test_ratio)
     if any(value <= 0 or value >= 1 for value in ratios):
         raise ValueError("Each split ratio must be greater than 0 and less than 1")
