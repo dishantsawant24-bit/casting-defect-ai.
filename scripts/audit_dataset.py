@@ -144,7 +144,7 @@ def audit_dataset(
             except (UnidentifiedImageError, OSError, ValueError) as exc:
                 corrupt_files.append({"image_path": rel_path, "error": str(exc)})
 
-    manifest.sort(key=lambda item: item["image_path"])
+    # Keep manifest order aligned with cached hashes and thumbnails during pairwise comparison.
     with (output_dir / "image_manifest.csv").open(
         "w", newline="", encoding="utf-8"
     ) as stream:
@@ -153,7 +153,7 @@ def audit_dataset(
             fieldnames=["image_path", "label", "sha256", "width", "height", "format", "mode"],
         )
         writer.writeheader()
-        writer.writerows(manifest)
+        writer.writerows(sorted(manifest, key=lambda item: item["image_path"]))
 
     pairs: list[dict[str, Any]] = []
     for first_index in range(len(manifest)):
